@@ -9,7 +9,7 @@ with open("README.md", "r", encoding='utf-8') as fh:
 
 setuptools.setup(
     name="mitmdump",
-    version="1.0.0",
+    version="1.0.1",
     author="mocobk",
     author_email="mailmzb@qq.com",
     description="以编程的方式运行 mitmproxy",
@@ -23,3 +23,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
 )
+
+install_requires = ['mitmproxy']
