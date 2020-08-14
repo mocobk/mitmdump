@@ -120,7 +120,7 @@ class Options(options.Options):
 class DumpMaster(dump.DumpMaster):
     def __init__(
             self,
-            options: Options,
+            options: Options = Options(),
             with_termlog=True,
             with_dumper=True,
     ) -> None:
@@ -145,10 +145,9 @@ class DumpMaster(dump.DumpMaster):
                 async def wakeup():
                     while True:
                         await asyncio.sleep(0.2)
+
                 asyncio.ensure_future(wakeup())
 
             super().run()
         except (KeyboardInterrupt, RuntimeError):
             pass
-
-
