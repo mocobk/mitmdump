@@ -1,6 +1,6 @@
 ## mitmdump
 ![](https://shields.mitmproxy.org/pypi/v/mitmdump.svg)
-![](https://shields.mitmproxy.org/pypi/pyversions/mitmdump.svg)
+![](https://shields.mitmproxy.org/pypi/pyversions/mitmproxy.svg)
 
 mitmdump 是对 mitmproxy 的简单封装，可以实现以编程的方式运行 mitmproxy 服务, 当然原来的命令行方式运行也是支持的。
 

@@ -9,7 +9,7 @@ with open("README.md", "r", encoding='utf-8') as fh:
 
 setuptools.setup(
     name="mitmdump",
-    version="1.0.2",
+    version="1.0.3",
     author="mocobk",
     author_email="mailmzb@qq.com",
     description="以编程的方式运行 mitmproxy",
@@ -20,6 +20,7 @@ setuptools.setup(
     install_requires=['mitmproxy'],
     classifiers=[
         "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "License :: OSI Approved :: MIT License",
