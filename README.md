@@ -2,15 +2,22 @@
 ![](https://shields.mitmproxy.org/pypi/v/mitmdump.svg)
 ![](https://shields.mitmproxy.org/pypi/pyversions/mitmproxy.svg)
 
-mitmdump 是对 mitmproxy 的简单封装，可以实现以编程的方式运行 mitmproxy 服务, 当然原来的命令行方式运行也是支持的。
+mitmdump 是对 mitmproxy 的简单封装，实现以编程的方式运行 mitmproxy
+ 服务, 方便我们开箱即用，而不再需要记住复杂的命令参数，当然原来的命令行方式运行也是支持的，另外对于某些特殊的应用场景，我们还可以借助 Pycharm
+  对编写的 mitmproxy 脚本进行断点调试。
 
+## 安装
 `pip install mitmdump`
 
+## 运行
 **Before:** `mitmdump -s youscript.py`
 
 **After:** `python youscript.py` or `mitmdump -s youscript.py`
 
+## 示例
 ```python
+# sample1.py
+
 from mitmproxy.http import HTTPFlow
 
 from mitmdump import DumpMaster, Options
@@ -30,16 +37,55 @@ addons = [
 ]
 
 if __name__ == '__main__':
-    opts = Options(server=True, listen_host='0.0.0.0', listen_port=8080, termlog_verbosity='info',
-                   show_clientconnect_log=False, flow_detail=1, dumper_filter='~m GET')
+    opts = Options(listen_host='0.0.0.0', listen_port=8888, scripts=__file__)
+    m = DumpMaster(opts)
+    m.run()
+```
+
+```python
+# sample2.py
+
+from mitmproxy import flowfilter, ctx, addonmanager
+from mitmproxy.http import HTTPFlow
+
+from mitmdump import DumpMaster, Options
+
+
+class FilterFlow:
+    def __init__(self):
+        self.filter = None
+
+    def load(self, loader: addonmanager.Loader):
+        self.filter = flowfilter.parse(ctx.options.dumper_filter)
+
+    def request(self, flow: HTTPFlow):
+        if flowfilter.match(self.filter, flow):
+            print(flow.request.url)
+
+    def response(self, flow: HTTPFlow):
+        if flowfilter.match(self.filter, flow):
+            print(flow.response.headers)
+
+
+addons = [
+    FilterFlow()
+]
+
+if __name__ == '__main__':
+    opts = Options(listen_host='0.0.0.0', listen_port=8888, scripts=None, dumper_filter='~m POST',
+                   flow_detail=1, termlog_verbosity='info', show_clientconnect_log=False)
     m = DumpMaster(opts)
 
+    # It's necessary if scripts parameter is None
+    # 如果你的 scripts 参数为 None，则下方加载插件的语句是必须要有的
     m.addons.add(*addons)
+
     m.run()
 ```
 
 ## 参数列表
-mitmdump 库所有可用的参数都保持跟 mitmproxy 一致，所以你不必担心使用上的困难，以下列举了可用参数及类型，参数使用说明参考命令行中的帮助信息。
+mitmdump 库所有可用的参数都保持跟 mitmproxy
+ 一致，所以你不必担心使用上的困难，以下列举了可用参数及类型，参数具体说明可参考对应命令行中的帮助信息。
 
 | params                              | default      | type                          |
 | ----------------------------------- | ------------ | ----------------------------- |
@@ -115,7 +161,7 @@ mitmdump 库所有可用的参数都保持跟 mitmproxy 一致，所以你不必
 | websocket                           | True         | [<class 'bool'>]              |
 
 
-### 参数作用 (参考对应的命令行参数帮助)
+### 命令行帮助信息
 ```bash
 usage: mitmdump [options] [filter]
 

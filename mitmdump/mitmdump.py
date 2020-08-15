@@ -14,6 +14,7 @@ from mitmproxy import exceptions
 from mitmproxy import http
 from mitmproxy import options
 from mitmproxy import proxy
+from mitmproxy.addonmanager import traverse, _get_name, Loader
 from mitmproxy.net.http import http1
 from mitmproxy.tools import dump
 
@@ -31,9 +32,7 @@ class ProxyServer(proxy.server.ProxyServer):
 
 class ConnectionHandler(proxy.server.ConnectionHandler):
     def handle(self):
-        show_clientconnect_log = hasattr(self.config.options,
-                                         'show_clientconnect_log') and self.config.options.show_clientconnect_log
-        if show_clientconnect_log:
+        if self.config.options.show_clientconnect_log:
             self.log("clientconnect", "info")
 
         root_layer = None
@@ -72,7 +71,7 @@ class ConnectionHandler(proxy.server.ConnectionHandler):
             print("mitmproxy has crashed!", file=sys.stderr)
             print("Please lodge a bug report at: https://github.com/mitmproxy/mitmproxy", file=sys.stderr)
 
-        if show_clientconnect_log:
+        if self.config.options.show_clientconnect_log:
             self.log("clientdisconnect", "info")
         if root_layer is not None:
             self.channel.tell("clientdisconnect", root_layer)
@@ -83,14 +82,14 @@ class Options(options.Options):
     def __init__(self,
                  listen_host: str = '0.0.0.0',
                  listen_port: int = 8080,
+                 scripts: typing.Union[str, typing.Sequence[str]] = None,
                  dumper_filter: str = None,
+                 ignore_hosts: typing.Sequence[str] = None,
+                 allow_hosts: typing.Sequence[str] = None,
                  flow_detail: int = 0,
                  termlog_verbosity: str = 'info',
                  show_clientconnect_log: bool = False,
-                 scripts: typing.Sequence[str] = None,
                  mode: str = 'regular',
-                 ignore_hosts: typing.Sequence[str] = None,
-                 allow_hosts: typing.Sequence[str] = None,
                  save_stream_file: str = None,
                  certs: typing.Sequence[str] = None,
                  **kwargs):
@@ -109,7 +108,7 @@ class Options(options.Options):
                                           flow_detail=flow_detail,
                                           termlog_verbosity=termlog_verbosity,
                                           show_clientconnect_log=show_clientconnect_log,
-                                          scripts=scripts,
+                                          scripts=scripts if isinstance(scripts, list) or None else [scripts],
                                           mode=mode,
                                           ignore_hosts=ignore_hosts,
                                           allow_hosts=allow_hosts,
@@ -126,7 +125,11 @@ class DumpMaster(dump.DumpMaster):
     ) -> None:
         super().__init__(options, with_termlog, with_dumper)
         # delay update options, avoid raise KeyError: 'Unknown options'
-        self.options.update(**self.options._options['kwargs'])
+        options_dict = self.options._options['kwargs']
+        if options_dict['scripts']:
+            self.addons.register = self.wrap_addon_register
+
+        self.options.update(**options_dict)
         self.server = ProxyServer(proxy.config.ProxyConfig(self.options))
 
     def run(self, func=None):
@@ -151,3 +154,32 @@ class DumpMaster(dump.DumpMaster):
             super().run()
         except (KeyboardInterrupt, RuntimeError):
             pass
+
+    def wrap_addon_register(self, addon):
+        """
+            Register an addon, call its load event, and then register all its
+            sub-addons. This should be used by addons that dynamically manage
+            addons.
+
+            If the calling addon is already running, it should follow with
+            running and configure events. Must be called within a current
+            context.
+
+            Sikp add addon if exist
+        """
+        for a in traverse([addon]):
+            name = _get_name(a)
+            if name in self.addons.lookup:
+                self.addons.remove(a)
+                # raise exceptions.AddonManagerError(
+                #     "An addon called '%s' already exists." % name
+                # )
+        l = Loader(self.addons.master)
+        self.addons.invoke_addon(addon, "load", l)
+        for a in traverse([addon]):
+            name = _get_name(a)
+            self.addons.lookup[name] = a
+        for a in traverse([addon]):
+            self.addons.master.commands.collect_commands(a)
+        self.addons.master.options.process_deferred()
+        return addon
