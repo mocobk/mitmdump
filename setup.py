@@ -9,7 +9,7 @@ with open("README.md", "r", encoding='utf-8') as fh:
 
 setuptools.setup(
     name="mitmdump",
-    version="1.1.1",
+    version="1.1.2",
     author="mocobk",
     author_email="mailmzb@qq.com",
     description="以编程的方式运行 mitmproxy",

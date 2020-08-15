@@ -2,7 +2,10 @@
 ![](https://shields.mitmproxy.org/pypi/v/mitmdump.svg)
 ![](https://shields.mitmproxy.org/pypi/pyversions/mitmproxy.svg)
 
-mitmdump 是对 mitmproxy 的简单封装，实现以编程的方式运行 mitmproxy
+![](https://mitmproxy.org/logo-navbar.png)
+
+[mitmdump](https://github.com/mocobk/mitmdump) 是对 [mitmproxy](https://mitmproxy.org/)
+ 的简单封装，实现以编程的方式运行 mitmproxy
  服务, 方便我们开箱即用，而不再需要记住复杂的命令参数，当然原来的命令行方式运行也是支持的，另外对于某些特殊的应用场景，我们还可以借助 Pycharm
   对编写的 mitmproxy 脚本进行断点调试。
 
@@ -82,6 +85,8 @@ if __name__ == '__main__':
 
     m.run()
 ```
+
+[更多官网示例](https://docs.mitmproxy.org/stable/addons-examples/)
 
 ## 参数列表
 mitmdump 库所有可用的参数都保持跟 mitmproxy
